@@ -15,6 +15,7 @@ import datetime
 import time
 import threading
 from bkv.mem_store import MemoryKvStore
+from bkv import utils
 
 class StoreItem:
     def __init__(self):
@@ -109,11 +110,12 @@ class MetaFile:
 class StoreFile:
     """db存储，管理1个存储文件"""
 
-    def __init__(self, db_dir="./data", store_file="./data-1.txt"):
+    def __init__(self, db_dir="./data", store_file="./data-1.txt", **kw):
         self.mem_store = MemoryKvStore()        
         self.last_pos = 0
         self.db_dir = db_dir
         self.store_file = store_file
+        self.print_load_stats = kw.get("print_load_stats", False)
         self.load_data_file()
         self.lock = threading.RLock()
 
@@ -128,6 +130,7 @@ class StoreFile:
                 pass
         
         with open(fpath, "r+") as fp:
+            count = 0
             while True:
                 pos = fp.tell()
                 line = fp.readline()
@@ -140,6 +143,13 @@ class StoreFile:
                     self.mem_store.delete(key)
                 else:
                     self.mem_store.put(key, str(pos))
+                
+                count+=1
+                if self.print_load_stats and count % 10000 == 0:
+                    mem_info = utils.memory_info()
+                    keys = len(self.mem_store)
+                    rss = mem_info.rss/1024/1024
+                    print(f"keys:({keys}), memory:({rss:.2f}MB)")
         
         self.write_fp = open(fpath, "a+")
         self.last_pos = self.write_fp.tell()
@@ -166,21 +176,21 @@ class StoreFile:
         self.write_fp.close()
     
     def get(self, key, **kw):
-        pos_str = self.mem_store.get(key, **kw)
-        if pos_str == None:
+        pos_int = self.mem_store.get(key, **kw)
+        if pos_int == None:
             return None
-        self.write_fp.seek(int(pos_str))
+        self.write_fp.seek(pos_int)
         line_str = self.write_fp.readline()
         return json.loads(line_str).get("v")
     
     def put(self, key, val, **kw):
-        pos = self.write_fp.tell()
+        pos_int = self.write_fp.tell()
         exist = self.get(key)
         if exist == val:
             # 没变化
             return
         with self.lock:
-            self.mem_store.put(key, str(pos), **kw)
+            self.mem_store.put(key, pos_int, **kw)
             self.write(key, val)
 
     def delete(self, key):
@@ -191,6 +201,16 @@ class StoreFile:
         with self.lock:
             self.mem_store.delete(key)
             self.write(key=key, delete=1)
+
+    def count(self):
+        return len(self.mem_store)
+
+    def avg_key_len(self):
+        length = 0
+        for key, pos in self.mem_store._data:
+            length += len(key)
+        return length / len(self.mem_store)
+
 
     def delete_file(self):
         self.write_fp.close()

@@ -4,11 +4,12 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:42:15
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 14:44:57
-FilePath: \bkv\bkv\shell.py
+LastEditTime: 2023-06-22 16:17:15
+FilePath: /bkv/bkv/shell.py
 Description: 描述
 '''
 import bkv
+import traceback
 
 class Shell:
     
@@ -30,7 +31,10 @@ class Shell:
             attr = "op_" + op
             if hasattr(self, attr):
                 meth = getattr(self, attr)
-                meth(parts)
+                try:
+                    meth(parts)
+                except:
+                    traceback.print_exc()
             else:
                 self.print_help()
 
@@ -70,6 +74,10 @@ class Shell:
     def op_compact(self, parts):
         self.db.compact()
         print("OK")
+    
+    def op_memory_info(self, parts):
+        print(self.db.memory_info())
+        print("OK")
 
     def print_help(self):
         print("bad command, supported commands:")
@@ -78,6 +86,7 @@ class Shell:
         print("- set $key $value     set value by key")
         print("- delete $key         delete key")
         print("- compact             compact data files")
+        print("- memory_info         print memory info")
         print()
 
 if __name__ == "__main__":

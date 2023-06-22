@@ -1,4 +1,15 @@
 # -*- coding:utf-8 -*-
+'''
+Author: xupingmao
+email: 578749341@qq.com
+Date: 2023-06-22 12:24:53
+LastEditors: xupingmao
+LastEditTime: 2023-06-22 16:17:54
+FilePath: /bkv/bkv/mem_store.py
+Description: 键值对存储，基于Bitcask模型, copied from leveldbpy
+'''
+
+# -*- coding:utf-8 -*-
 #!/usr/bin/env python
 #
 # Copyright (C) 2012 Space Monkey, Inc.
@@ -23,40 +34,27 @@
 # SOFTWARE.
 #
 
-"""
-@Author       : xupingmao
-@email        : 578749341@qq.com
-@Date         : 2023-02-01 23:15:02
-@LastEditors  : xupingmao
-@LastEditTime : 2023-02-05 13:45:55
-@FilePath     : /xnoted:/projects/learn-python/src/storage/my_kv.py
-@Description  : 键值对存储，基于Bitcask模型, copied from leveldbpy
-"""
 import bisect
 import threading
 
 
 class MemoryKvStore(object):
 
-    __slots__ = ["_data", "_lock", "_is_snapshot"]
+    __slots__ = ["_data", "_lock"]
 
-    def __init__(self, data=None, is_snapshot=False):
+    def __init__(self, data=None):
         if data is None:
             self._data = []
         else:
             self._data = data
         self._lock = threading.RLock()
-        self._is_snapshot = is_snapshot
 
     def close(self):
         with self._lock:
             self._data = []
 
     def put(self, key, val, **_kwargs):
-        if self._is_snapshot:
-            raise TypeError("cannot put on leveldb snapshot")
         assert isinstance(key, str)
-        assert isinstance(val, str)
         with self._lock:
             idx = bisect.bisect_left(self._data, (key, ""))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
@@ -65,8 +63,6 @@ class MemoryKvStore(object):
                 self._data.insert(idx, (key, val))
 
     def delete(self, key, **_kwargs):
-        if self._is_snapshot:
-            raise TypeError("cannot delete on leveldb snapshot")
         with self._lock:
             idx = bisect.bisect_left(self._data, (key, ""))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
@@ -78,11 +74,12 @@ class MemoryKvStore(object):
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 return self._data[idx][1]
             return None
+        
+    def __len__(self):
+        return len(self._data)
 
     # pylint: disable=W0212
     def write(self, batch, **_kwargs):
-        if self._is_snapshot:
-            raise TypeError("cannot write on leveldb snapshot")
         with self._lock:
             for key, val in batch._puts.iteritems():
                 self.put(key, val)
