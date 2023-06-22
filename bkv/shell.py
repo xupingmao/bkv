@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:42:15
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 16:17:15
+LastEditTime: 2023-06-22 16:36:28
 FilePath: /bkv/bkv/shell.py
 Description: 描述
 '''
@@ -79,12 +79,21 @@ class Shell:
         print(self.db.memory_info())
         print("OK")
 
+    def op_keys(self, parts):
+        if len(parts) != 2:
+            print("bad keys command")
+        else:
+            key = parts[1]
+            print(self.db.keys(key))
+            print("OK")
+
     def print_help(self):
         print("bad command, supported commands:")
         print("- get $key            get value by key")
         print("- put $key $value     set value by key")
         print("- set $key $value     set value by key")
         print("- delete $key         delete key")
+        print("- keys $key           search key")
         print("- compact             compact data files")
         print("- memory_info         print memory info")
         print()

@@ -14,6 +14,7 @@ import os
 import datetime
 import time
 import threading
+import fnmatch
 from bkv.mem_store import MemoryKvStore
 from bkv import utils
 
@@ -27,7 +28,7 @@ class StoreMeta:
     def __init__(self):
         self.version = ""
         self.create_time = ""
-        self.store_file = ""
+        self.data_file = ""
 
 def format_datetime(value=None, format='%Y-%m-%d %H:%M:%S'):
     """格式化日期时间
@@ -45,7 +46,7 @@ def format_datetime(value=None, format='%Y-%m-%d %H:%M:%S'):
 class MetaFile:
 
     meta_version = "1.0.0"
-    default_store_file = "data.txt"
+    default_data_file = "data-0.txt"
 
     def __init__(self, db_dir="./data"):
         meta_file = "./meta.txt"
@@ -73,7 +74,7 @@ class MetaFile:
         with open(self.meta_file, "w+") as fp:
             meta = StoreMeta()
             meta.version = self.meta_version
-            meta.store_file = self.default_store_file
+            meta.data_file = self.default_data_file
             meta.create_time = format_datetime()
             fp.write(json.dumps(meta.__dict__))
             fp.flush()
@@ -84,15 +85,15 @@ class MetaFile:
         json_dict = json.loads(json_str)
         item = StoreMeta()
         item.__dict__.update(json_dict)
-        if item.store_file == "":
-            item.store_file = "data-0.txt"
+        if item.data_file == "":
+            item.data_file = "data-0.txt"
         return item
     
     def save(self):
         with open(self.meta_file, "w+") as fp:
             fp.write(json.dumps(self.meta.__dict__))
     
-    def create_new_store_file(self):
+    def create_new_data_file(self):
         for i in range(100):
             fname = "data-%d.txt" % i
             fpath = os.path.join(self.db_dir, fname)
@@ -104,17 +105,17 @@ class MetaFile:
         for i in range(100):
             fname = "data-%d.txt" % i
             fpath = os.path.join(self.db_dir, fname)
-            if os.path.exists(fpath) and fname != self.meta.store_file:
+            if os.path.exists(fpath) and fname != self.meta.data_file:
                 print("found old data file:", fname)
 
-class StoreFile:
+class DataFile:
     """db存储，管理1个存储文件"""
 
-    def __init__(self, db_dir="./data", store_file="./data-1.txt", **kw):
-        self.mem_store = MemoryKvStore()        
+    def __init__(self, db_dir="./data", data_file="./data-1.txt", **kw):
+        self.mem_store = MemoryKvStore(default_value=0)        
         self.last_pos = 0
         self.db_dir = db_dir
-        self.store_file = store_file
+        self.data_file = data_file
         self.print_load_stats = kw.get("print_load_stats", False)
         self.load_data_file()
         self.lock = threading.RLock()
@@ -124,7 +125,7 @@ class StoreFile:
         if not os.path.exists(self.db_dir):
             os.makedirs(self.db_dir)
     
-        fpath = os.path.join(self.db_dir, self.store_file)
+        fpath = os.path.join(self.db_dir, self.data_file)
         if not os.path.exists(fpath):
             with open(fpath, "w+") as fp:
                 pass
@@ -142,7 +143,7 @@ class StoreFile:
                     # 已删除
                     self.mem_store.delete(key)
                 else:
-                    self.mem_store.put(key, str(pos))
+                    self.mem_store.put(key, pos)
                 
                 count+=1
                 if self.print_load_stats and count % 10000 == 0:
@@ -175,22 +176,22 @@ class StoreFile:
     def close(self):
         self.write_fp.close()
     
-    def get(self, key, **kw):
-        pos_int = self.mem_store.get(key, **kw)
+    def get(self, key):
+        pos_int = self.mem_store.get(key)
         if pos_int == None:
             return None
         self.write_fp.seek(pos_int)
         line_str = self.write_fp.readline()
         return json.loads(line_str).get("v")
     
-    def put(self, key, val, **kw):
+    def put(self, key, val):
         pos_int = self.write_fp.tell()
         exist = self.get(key)
         if exist == val:
             # 没变化
             return
         with self.lock:
-            self.mem_store.put(key, pos_int, **kw)
+            self.mem_store.put(key, pos_int)
             self.write(key, val)
 
     def delete(self, key):
@@ -211,8 +212,16 @@ class StoreFile:
             length += len(key)
         return length / len(self.mem_store)
 
+    def keys(self, key, limit=100):
+        result = []
+        for store_key, pos in self.mem_store._data:
+            if fnmatch.fnmatch(store_key, key):
+                result.append(store_key)
+                if len(result) >= limit:
+                    break
+        return result
 
     def delete_file(self):
         self.write_fp.close()
-        fpath = os.path.join(self.db_dir, self.store_file)
+        fpath = os.path.join(self.db_dir, self.data_file)
         os.remove(fpath)

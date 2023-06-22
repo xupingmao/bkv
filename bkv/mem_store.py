@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:24:53
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 16:17:54
+LastEditTime: 2023-06-22 16:44:51
 FilePath: /bkv/bkv/mem_store.py
 Description: 键值对存储，基于Bitcask模型, copied from leveldbpy
 '''
@@ -40,14 +40,13 @@ import threading
 
 class MemoryKvStore(object):
 
-    __slots__ = ["_data", "_lock"]
-
-    def __init__(self, data=None):
+    def __init__(self, data=None, default_value=""):
         if data is None:
             self._data = []
         else:
             self._data = data
         self._lock = threading.RLock()
+        self.default_value = default_value
 
     def close(self):
         with self._lock:
@@ -56,7 +55,7 @@ class MemoryKvStore(object):
     def put(self, key, val, **_kwargs):
         assert isinstance(key, str)
         with self._lock:
-            idx = bisect.bisect_left(self._data, (key, ""))
+            idx = bisect.bisect_left(self._data, (key, val))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 self._data[idx] = (key, val)
             else:
@@ -64,13 +63,13 @@ class MemoryKvStore(object):
 
     def delete(self, key, **_kwargs):
         with self._lock:
-            idx = bisect.bisect_left(self._data, (key, ""))
+            idx = bisect.bisect_left(self._data, (key, self.default_value))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 del self._data[idx]
 
     def get(self, key, **_kwargs):
         with self._lock:
-            idx = bisect.bisect_left(self._data, (key, ""))
+            idx = bisect.bisect_left(self._data, (key, self.default_value))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 return self._data[idx][1]
             return None
@@ -105,6 +104,7 @@ class _IteratorMemImpl(object):
     def __init__(self, memdb_data):
         self._data = memdb_data
         self._idx = -1
+        self.default_value = ""
 
     def valid(self):
         return 0 <= self._idx < len(self._data)
@@ -116,7 +116,7 @@ class _IteratorMemImpl(object):
         return self._data[self._idx][1]
 
     def seek(self, key):
-        self._idx = bisect.bisect_left(self._data, (key, ""))
+        self._idx = bisect.bisect_left(self._data, (key, self.default_value))
 
     def seekFirst(self):
         self._idx = 0

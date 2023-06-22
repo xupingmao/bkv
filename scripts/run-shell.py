@@ -15,7 +15,7 @@ def get_project_root():
     scripts_dir = os.path.dirname(__file__)
     return os.path.dirname(scripts_dir)
 
-sys.path.append(get_project_root())
+sys.path.insert(1, get_project_root())
 from bkv.shell import Shell
 
 
