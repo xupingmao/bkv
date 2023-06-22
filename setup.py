@@ -3,8 +3,8 @@
 Author: xupingmao xupingmao@gmail.com
 Date: 2023-03-11 13:44:52
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 15:06:05
-FilePath: \bkv\setup.py
+LastEditTime: 2023-06-22 16:53:53
+FilePath: /bkv/setup.py
 Description: A simple kv store
 '''
 import setuptools
@@ -14,7 +14,7 @@ with open("README.md", "r+", encoding="utf-8") as fp:
 
 setuptools.setup(
     name = "bkv",
-    version = "0.0.1",
+    version = "0.0.2",
     author = "mark",
     author_email = "578749341@qq.com",
     description  = "A simple kv store",

@@ -1,3 +1,5 @@
 test-data
 */__pycache__/*
 bkv.egg-info/*
+build/*
+dist/*
