@@ -170,6 +170,7 @@ class DataFile:
         item.d = delete
         self.write_fp.write(json.dumps(item.__dict__))
         self.write_fp.write("\n")
+        # TODO 提供更多flush策略
         self.write_fp.flush()
         self.last_pos = self.write_fp.tell()
     
