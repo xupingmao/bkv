@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:23:46
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 13:44:43
+LastEditTime: 2023-06-22 14:27:17
 FilePath: \bkv\bkv\__init__.py
 Description: 键值对存储，基于Bitcask模型
 '''
@@ -34,7 +34,10 @@ class DB:
             old_store = self.store
             old_store.delete_file()
             self.store = new_store
-            
+    
+    def delete_old_files(self):
+        with self.lock:
+            return self.meta.delete_old_data_files()
     
     def get(self, key):
         return self.store.get(key)

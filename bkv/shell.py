@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:42:15
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 13:44:57
+LastEditTime: 2023-06-22 14:44:57
 FilePath: \bkv\bkv\shell.py
 Description: 描述
 '''
@@ -32,7 +32,7 @@ class Shell:
                 meth = getattr(self, attr)
                 meth(parts)
             else:
-                print("bad command, supported commands: get/put/set/compact")
+                self.print_help()
 
         self.db.close()
         
@@ -63,9 +63,22 @@ class Shell:
             self.db.delete(key)
             print("OK")
     
+    def op_delete_old_files(self, parts):
+        self.db.delete_old_files()
+        print("OK")
+    
     def op_compact(self, parts):
         self.db.compact()
         print("OK")
+
+    def print_help(self):
+        print("bad command, supported commands:")
+        print("- get $key            get value by key")
+        print("- put $key $value     set value by key")
+        print("- set $key $value     set value by key")
+        print("- delete $key         delete key")
+        print("- compact             compact data files")
+        print()
 
 if __name__ == "__main__":
     shell = Shell()

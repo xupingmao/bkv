@@ -98,6 +98,13 @@ class MetaFile:
             if not os.path.exists(fpath):
                 return fname
         raise Exception("too many store files")
+    
+    def delete_old_data_files(self):
+        for i in range(100):
+            fname = "data-%d.txt" % i
+            fpath = os.path.join(self.db_dir, fname)
+            if os.path.exists(fpath) and fname != self.meta.store_file:
+                print("found old data file:", fname)
 
 class StoreFile:
     """db存储，管理1个存储文件"""
