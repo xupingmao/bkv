@@ -218,13 +218,13 @@ class DataFile:
 
     def avg_key_len(self):
         length = 0
-        for key, pos in self.mem_store._data:
+        for key, pos in self.mem_store:
             length += len(key)
         return length / len(self.mem_store)
 
     def keys(self, key, limit=100):
         result = []
-        for store_key, pos in self.mem_store._data:
+        for store_key, pos in self.mem_store:
             if fnmatch.fnmatch(store_key, key):
                 result.append(store_key)
                 if len(result) >= limit:

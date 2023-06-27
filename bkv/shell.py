@@ -13,8 +13,8 @@ import traceback
 
 class Shell:
     
-    def __init__(self) -> None:
-        self.db = bkv.DB(db_dir="./test-data")
+    def __init__(self, **kw):
+        self.db = bkv.DB(db_dir="./test-data", **kw)
 
     def loop(self):
         while True:
