@@ -195,6 +195,7 @@ class DataFile:
         return json.loads(line_str).get("v")
     
     def put(self, key, val):
+        # TODO 把data文件切割成多个文件，写满一个文件后自动切换到新的文件
         pos_int = self.write_fp.tell()
         exist = self.get(key)
         if exist == val:
