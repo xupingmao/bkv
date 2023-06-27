@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:24:53
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 16:44:51
+LastEditTime: 2023-06-27 23:34:22
 FilePath: /bkv/bkv/mem_store.py
 Description: 键值对存储，基于Bitcask模型, copied from leveldbpy
 '''
@@ -38,7 +38,18 @@ import bisect
 import threading
 
 
-class MemoryKvStore(object):
+class KvInterface(object):
+
+    def get(self, key):
+        return None
+    
+    def put(self, key, val):
+        pass
+
+    def delete(self, key):
+        pass
+
+class MemoryKvStore(KvInterface):
 
     def __init__(self, data=None, default_value=""):
         if data is None:
@@ -52,7 +63,7 @@ class MemoryKvStore(object):
         with self._lock:
             self._data = []
 
-    def put(self, key, val, **_kwargs):
+    def put(self, key, val):
         assert isinstance(key, str)
         with self._lock:
             idx = bisect.bisect_left(self._data, (key, val))
@@ -61,24 +72,23 @@ class MemoryKvStore(object):
             else:
                 self._data.insert(idx, (key, val))
 
-    def delete(self, key, **_kwargs):
+    def delete(self, key):
         with self._lock:
             idx = bisect.bisect_left(self._data, (key, self.default_value))
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 del self._data[idx]
 
-    def get(self, key, **_kwargs):
-        with self._lock:
-            idx = bisect.bisect_left(self._data, (key, self.default_value))
-            if 0 <= idx < len(self._data) and self._data[idx][0] == key:
-                return self._data[idx][1]
-            return None
+    def get(self, key):
+        idx = bisect.bisect_left(self._data, (key, self.default_value))
+        if 0 <= idx < len(self._data) and self._data[idx][0] == key:
+            return self._data[idx][1]
+        return None
         
     def __len__(self):
         return len(self._data)
 
     # pylint: disable=W0212
-    def write(self, batch, **_kwargs):
+    def write(self, batch):
         with self._lock:
             for key, val in batch._puts.iteritems():
                 self.put(key, val)
@@ -95,6 +105,8 @@ class MemoryKvStore(object):
         with self._lock:
             return _IteratorMemImpl(self._data[:])
 
+    def __iter__(self):
+        yield from self._data
 
 
 class _IteratorMemImpl(object):
@@ -133,3 +145,70 @@ class _IteratorMemImpl(object):
     def close(self):
       self._data = []
       self._idx = -1
+
+
+class SqliteMemStore(KvInterface):
+
+    def __init__(self):
+        import sqlite3
+        self.db = sqlite3.connect(":memory:")
+        self.execute_sql("create table kv (k text primary key, v bigint)")
+        self._lock = threading.RLock()
+
+    def close(self):
+        self.db.close()
+
+    def put(self, key, val):
+        assert isinstance(key, str)
+        with self._lock:
+            result = self.execute_sql("select k from kv where k=?", key)
+            if len(result) == 0:
+                self.execute_sql("insert into kv(k,v) values(?,?)", key, val)
+            else:
+                self.execute_sql("update kv set v=? where k=?", val, key)
+
+    def execute_sql(self, sql, *args):
+        cursorobj = self.db.cursor()
+        try:
+            cursorobj.execute(sql, args)
+            # dict_result = []
+            result = cursorobj.fetchall()
+            # for single in result:
+            #     resultMap = {}
+            #     for i, desc in enumerate(cursorobj.description):
+            #         name = desc[0]
+            #         resultMap[name] = single[i]
+            #     dict_result.append(resultMap)
+            self.db.commit()
+            return result
+        except Exception as e:
+            self.db.rollback()
+            raise e
+        finally:
+            cursorobj.close()
+
+
+    def delete(self, key):
+        with self._lock:
+            self.execute_sql("delete from kv where k=?", key)
+
+    def get(self, key):
+        result = self.execute_sql("select v from kv where k=?", key)
+        if len(result) > 0:
+            return result[0][0]
+        return None
+        
+    def __len__(self):
+        result = self.execute_sql("select count(*) as amount from kv")
+        return result[0][0]
+    
+    def __iter__(self):
+        cursor = self.db.cursor()
+        try:
+            cursor.execute("select k,v from kv")
+            for k,v in cursor:
+                yield k,v
+        finally:
+            cursor.close()
+
+

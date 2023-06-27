@@ -15,7 +15,7 @@ import datetime
 import time
 import threading
 import fnmatch
-from bkv.mem_store import MemoryKvStore
+from bkv.mem_store import MemoryKvStore, SqliteMemStore
 from bkv import utils
 
 class StoreItem:
@@ -112,9 +112,15 @@ class DataFile:
     """db存储，管理1个存储文件"""
 
     def __init__(self, db_dir="./data", data_file="./data-1.txt", **kw):
-        self.mem_store = MemoryKvStore(default_value=0)        
         self.last_pos = 0
         self.db_dir = db_dir
+        self.mem_store_type = kw.get("mem_store_type", "bisect")
+
+        if self.mem_store_type == "sqlite":
+            self.mem_store = SqliteMemStore()
+        else:
+            self.mem_store = MemoryKvStore(default_value=0)
+
         self.data_file = data_file
         self.print_load_stats = kw.get("print_load_stats", False)
         self.load_data_file()
@@ -130,6 +136,7 @@ class DataFile:
             with open(fpath, "w+") as fp:
                 pass
         
+        qps_counter = utils.QpsCounter()
         with open(fpath, "r+") as fp:
             count = 0
             while True:
@@ -147,10 +154,12 @@ class DataFile:
                 
                 count+=1
                 if self.print_load_stats and count % 10000 == 0:
+                    qps_counter.set_count(count)
                     mem_info = utils.memory_info()
                     keys = len(self.mem_store)
                     rss = mem_info.rss/1024/1024
-                    print(f"keys:({keys}), memory:({rss:.2f}MB)")
+                    qps = qps_counter.qps()
+                    print(f"keys:({keys}), memory:({rss:.2f}MB), qps:({qps//1})")
         
         self.write_fp = open(fpath, "a+")
         self.last_pos = self.write_fp.tell()
