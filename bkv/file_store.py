@@ -3,9 +3,9 @@
 @Author       : xupingmao
 @email        : 578749341@qq.com
 @Date         : 2023-02-01 23:15:02
-@LastEditors  : xupingmao
-@LastEditTime : 2023-02-05 13:45:55
-@FilePath     : /xnoted:/projects/learn-python/src/storage/my_kv.py
+@LastEditors: xupingmao
+@LastEditTime: 2023-12-29 18:45:28
+@FilePath: \bkv\bkv\file_store.py
 @Description  : 键值对存储，基于Bitcask模型
 """
 
@@ -17,6 +17,7 @@ import threading
 import fnmatch
 from bkv.mem_store import MemoryKvStore, SqliteMemStore
 from bkv import utils
+from bkv.config import Config
 
 class StoreItem:
     def __init__(self):
@@ -89,6 +90,9 @@ class MetaFile:
             item.data_file = "data-0.txt"
         return item
     
+    def update_data_file(self, data_file=""):
+        self.meta.data_file = data_file
+    
     def save(self):
         with open(self.meta_file, "w+") as fp:
             fp.write(json.dumps(self.meta.__dict__))
@@ -111,18 +115,18 @@ class MetaFile:
 class DataFile:
     """db存储，管理1个存储文件"""
 
-    def __init__(self, db_dir="./data", data_file="./data-1.txt", **kw):
+    def __init__(self, config=Config()):
         self.last_pos = 0
-        self.db_dir = db_dir
-        self.mem_store_type = kw.get("mem_store_type", "bisect")
+        self.db_dir = config.db_dir
+        self.mem_store_type = config.mem_store_type
 
         if self.mem_store_type == "sqlite":
             self.mem_store = SqliteMemStore()
         else:
             self.mem_store = MemoryKvStore(default_value=0)
 
-        self.data_file = data_file
-        self.print_load_stats = kw.get("print_load_stats", False)
+        self.data_file = config.data_file
+        self.print_load_stats = config.print_load_stats
         self.load_data_file()
         self.lock = threading.RLock()
 

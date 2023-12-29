@@ -9,26 +9,35 @@ FilePath: /bkv/bkv/__init__.py
 Description: 键值对存储，基于Bitcask模型
 '''
 import threading
+import copy
 from bkv.file_store import MetaFile, DataFile
 from bkv import utils
+from bkv.config import Config
 
 class DB:
-    def __init__(self, db_dir = "./data", **kw):
-        self.db_dir = db_dir
-        self.meta = MetaFile(db_dir)
-        self.store = DataFile(db_dir, self.meta.meta.data_file, **kw)
+    def __init__(self, **kw):
+        """初始化数据库, 配置key参考 `bkv.config.Config`
+        """
+        config = Config().load(kw)
+        self.db_dir = config.db_dir
+        self.meta = MetaFile(config.db_dir)
+        self.store = DataFile(config=config)
         self.lock = threading.RLock()
+        self.config = config
     
     def compact(self):
         with self.lock:
             new_file = self.meta.create_new_data_file()
-            new_store = DataFile(self.db_dir, new_file)
+            new_cfg = copy.copy(self.config)
+            new_cfg.data_file = new_file
+            new_store = DataFile(new_cfg)
             for key, pos_int in self.store.mem_store._data:
                 val = self.get(key)
                 if val != None:
                     new_store.put(key, val)
+            
             # 先更新meta信息
-            self.meta.meta.data_file = new_file
+            self.meta.update_data_file(new_file)
             self.meta.save()
 
             # 更新成功后删除文件
