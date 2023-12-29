@@ -4,9 +4,9 @@
 @email        : 578749341@qq.com
 @Date         : 2023-02-01 23:15:02
 @LastEditors: xupingmao
-@LastEditTime: 2023-12-29 18:45:28
+@LastEditTime: 2023-12-29 19:58:26
 @FilePath: \bkv\bkv\file_store.py
-@Description  : 键值对存储，基于Bitcask模型
+@Description  : 键值对存储, 基于Bitcask模型
 """
 
 import json
@@ -47,12 +47,14 @@ def format_datetime(value=None, format='%Y-%m-%d %H:%M:%S'):
 class MetaFile:
 
     meta_version = "1.0.0"
-    default_data_file = "data-0.txt"
 
-    def __init__(self, db_dir="./data"):
-        meta_file = "./meta.txt"
-        self.db_dir = db_dir
+    def __init__(self, config = Config()):
+        db_dir = config.db_dir
+        meta_file = config.meta_file
+        self.db_dir = config.db_dir
+        self.default_data_file = config.default_data_file
         self.meta_file = os.path.join(db_dir, meta_file)
+        self.config = config
         self.load_meta_file()
 
     def load_meta_file(self):
@@ -87,11 +89,14 @@ class MetaFile:
         item = StoreMeta()
         item.__dict__.update(json_dict)
         if item.data_file == "":
-            item.data_file = "data-0.txt"
+            item.data_file = self.config.default_data_file
         return item
     
     def update_data_file(self, data_file=""):
         self.meta.data_file = data_file
+        
+    def get_data_file(self):
+        return self.meta.data_file
     
     def save(self):
         with open(self.meta_file, "w+") as fp:
@@ -115,7 +120,7 @@ class MetaFile:
 class DataFile:
     """db存储，管理1个存储文件"""
 
-    def __init__(self, config=Config()):
+    def __init__(self, data_file="", config=Config()):
         self.last_pos = 0
         self.db_dir = config.db_dir
         self.mem_store_type = config.mem_store_type
@@ -125,7 +130,7 @@ class DataFile:
         else:
             self.mem_store = MemoryKvStore(default_value=0)
 
-        self.data_file = config.data_file
+        self.data_file = data_file
         self.print_load_stats = config.print_load_stats
         self.load_data_file()
         self.lock = threading.RLock()
@@ -240,3 +245,6 @@ class DataFile:
         self.write_fp.close()
         fpath = os.path.join(self.db_dir, self.data_file)
         os.remove(fpath)
+        
+    def iter_data(self):
+        yield from self.mem_store

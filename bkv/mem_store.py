@@ -1,13 +1,13 @@
 # -*- coding:utf-8 -*-
-'''
+"""
 Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:24:53
-LastEditors: xupingmao
-LastEditTime: 2023-06-27 23:34:22
-FilePath: /bkv/bkv/mem_store.py
-Description: 键值对存储，基于Bitcask模型, copied from leveldbpy
-'''
+@LastEditors: xupingmao
+@LastEditTime: 2023-12-29 20:13:56
+@FilePath: \bkv\bkv\mem_store.py
+Description: 键值对存储, 基于Bitcask模型, copied from leveldbpy
+"""
 
 # -*- coding:utf-8 -*-
 #!/usr/bin/env python
@@ -66,7 +66,9 @@ class MemoryKvStore(KvInterface):
     def put(self, key, val):
         assert isinstance(key, str)
         with self._lock:
-            idx = bisect.bisect_left(self._data, (key, val))
+            idx = bisect.bisect_left(self._data, (key, self.default_value))
+            # 满足任意data[:idx]中的元素 < (key, self.default_value)
+            # 所以 data[idx] >= (key, self.default_value)
             if 0 <= idx < len(self._data) and self._data[idx][0] == key:
                 self._data[idx] = (key, val)
             else:
