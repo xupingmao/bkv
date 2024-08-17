@@ -16,9 +16,9 @@ import time
 import threading
 import fnmatch
 import logging
-from bkv.mem_store import MemoryKvStore, SqliteMemStore
 from bkv import utils
-from bkv.config import Config
+from bkv.store.mem_store import MemoryKvStore, SqliteMemStore
+from bkv.store.config import Config
 
 class StoreItem:
     def __init__(self):

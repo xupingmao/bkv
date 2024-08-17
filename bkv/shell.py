@@ -18,7 +18,7 @@ class Shell:
     def __init__(self, **kw):
         logging.basicConfig(format='%(asctime)s|%(levelname)s|%(filename)s:%(lineno)d|%(message)s',
             level=logging.INFO)
-        self.db = bkv.DB(db_dir="./test-data", **kw)
+        self.db = bkv.store.DB(db_dir="./test-data", **kw)
 
     def loop(self):
         while True:

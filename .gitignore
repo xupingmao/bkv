@@ -3,3 +3,6 @@ test-data
 bkv.egg-info/*
 build/*
 dist/*
+.venv/
+bkv/store/__pycache__/
+bkv/server/__pycache__/

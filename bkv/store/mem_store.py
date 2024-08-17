@@ -6,7 +6,7 @@ Date: 2023-06-22 12:24:53
 @LastEditors: xupingmao
 @LastEditTime: 2023-12-29 20:13:56
 @FilePath: \bkv\bkv\mem_store.py
-Description: 键值对存储, 基于Bitcask模型, copied from leveldbpy
+Description: 键值对存储, 基于Bitcask模型, modified from leveldbpy
 """
 
 # -*- coding:utf-8 -*-

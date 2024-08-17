@@ -17,6 +17,7 @@ def get_project_root():
     return os.path.dirname(scripts_dir)
 
 sys.path.insert(1, get_project_root())
+
 from bkv.shell import Shell
 
 def run_shell(mem_store_type="mem"):

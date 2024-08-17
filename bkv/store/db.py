@@ -11,9 +11,9 @@
 
 import threading
 import copy
-from bkv.file_store import MetaFile, DataFile
 from bkv import utils
-from bkv.config import Config
+from bkv.store.file_store import MetaFile, DataFile
+from bkv.store.config import Config
 
 class DB:
     def __init__(self, **kw):
@@ -66,7 +66,7 @@ class DB:
     def avg_key_len(self):
         return self.store.avg_key_len()
     
-    def keys(self, key, limit=100):
+    def keys(self, key: str, limit=100):
         return self.store.keys(key, limit=limit)
     
     def close(self):
