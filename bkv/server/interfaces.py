@@ -42,10 +42,10 @@ class RedisInterface:
     def execute_get(self, key: bytes):
         return b''
 
-    def execute_incrby(self, key: typing.Union[bytes, object], value):
+    def execute_incrby(self, key: bytes, value):
         return 0
 
-    def execute_decrby(self, key: typing.Union[bytes, object], value):
+    def execute_decrby(self, key: bytes, value):
         return 0
 
     def execute_del(self, *keys: bytes):
@@ -54,12 +54,12 @@ class RedisInterface:
     def execute_scan(self, cursor):
         return resp.Errors.NOT_IMPLEMENTED
 
-    def execute_sadd(self, key: (MUTABLE_KEY, KEY_SET), *args):
+    def execute_sadd(self, key: bytes, *args):
         return resp.Errors.NOT_IMPLEMENTED
 
-    def execute_spop(self, key: (MUTABLE_KEY, KEY_SET)):
+    def execute_spop(self, key: bytes):
         return resp.Errors.NOT_IMPLEMENTED
 
-    def execute_scard(self, key: KEY_SET):
+    def execute_scard(self, key: bytes):
         return resp.Errors.NOT_IMPLEMENTED
 

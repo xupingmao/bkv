@@ -56,7 +56,7 @@ def redis_command(command):
         return new_func
     return wrapper
 
-class LuaRuntime:
+class FakeLuaRuntime:
 
     def __init__(self, encoding=None, unpack_returned_tuples=True):
         pass
@@ -76,7 +76,7 @@ class Redis(RedisInterface):
         self.cursors = {}
 
         self.lua_proxy = self.get_lua_proxy()
-        self.lua = LuaRuntime(
+        self.lua = FakeLuaRuntime(
             encoding=None,
             unpack_returned_tuples=True
         )

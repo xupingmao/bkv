@@ -54,7 +54,7 @@ def _resp_dumps(value):
     if value is QUEUED:
         return [b'+QUEUED']
 
-    if isinstance(value, int):
+    if isinstance(value, (int,float)):
         return [b':' + str(value).encode()]
 
     if isinstance(value, str):

@@ -11,6 +11,7 @@ Description: 描述
 
 import os
 import time
+import json
 
 def memory_info():
     """获取内存信息"""
@@ -39,3 +40,7 @@ class QpsCounter:
     
     def cost_time(self):
         return time.time() - self.start_time
+    
+
+def dump_json(obj):
+    return json.dumps(obj, separators=(',',':'))

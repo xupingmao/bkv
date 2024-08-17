@@ -80,7 +80,7 @@ class MetaFile:
             meta.version = self.meta_version
             meta.data_file = self.default_data_file
             meta.create_time = format_datetime()
-            fp.write(json.dumps(meta.__dict__))
+            fp.write(utils.dump_json(meta.__dict__))
             fp.flush()
             return meta
             
@@ -101,7 +101,7 @@ class MetaFile:
     
     def save(self):
         with open(self.meta_file, "w+") as fp:
-            fp.write(json.dumps(self.meta.__dict__))
+            fp.write(utils.dump_json(self.meta.__dict__))
     
     def create_new_data_file(self):
         for i in range(100):
@@ -190,7 +190,7 @@ class DataFile:
         item.k = key
         item.v = val
         item.d = delete
-        self.write_fp.write(json.dumps(item.__dict__))
+        self.write_fp.write(utils.dump_json(item.__dict__))
         self.write_fp.write("\n")
         # TODO 提供更多flush策略
         self.write_fp.flush()
