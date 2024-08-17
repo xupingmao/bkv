@@ -26,7 +26,7 @@ class CommandQueue:
         if key in self.watch:
             self.rollback = True
 
-    def execute(self, command, *command_args):
+    def execute(self, command: bytes, *command_args):
         if command == b'UNWATCH':
             self.watch.clear()
             self.redis.remove_watch(self)
@@ -36,7 +36,7 @@ class CommandQueue:
             return self.execute_without_transaction(command, *command_args)
         return self.execute_with_transaction(command, *command_args)
 
-    def execute_with_transaction(self, command, *args):
+    def execute_with_transaction(self, command: bytes, *args):
         assert self.transaction is not None
 
         if command == b'MULTI':
