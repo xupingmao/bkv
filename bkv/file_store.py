@@ -15,6 +15,7 @@ import datetime
 import time
 import threading
 import fnmatch
+import logging
 from bkv.mem_store import MemoryKvStore, SqliteMemStore
 from bkv import utils
 from bkv.config import Config
@@ -120,6 +121,8 @@ class MetaFile:
 class DataFile:
     """db存储，管理1个存储文件"""
 
+    logger = logging.getLogger("DataFile")
+
     def __init__(self, data_file="", config=Config()):
         self.last_pos = 0
         self.db_dir = config.db_dir
@@ -135,7 +138,6 @@ class DataFile:
         self.load_data_file()
         self.lock = threading.RLock()
 
-
     def load_data_file(self):
         if not os.path.exists(self.db_dir):
             os.makedirs(self.db_dir)
@@ -145,6 +147,8 @@ class DataFile:
             with open(fpath, "w+") as fp:
                 pass
         
+        self.logger.info("load data file %s", self.data_file)
+
         qps_counter = utils.QpsCounter()
         with open(fpath, "r+") as fp:
             count = 0
@@ -199,6 +203,7 @@ class DataFile:
         pos_int = self.mem_store.get(key)
         if pos_int == None:
             return None
+        self.logger.debug("get(%s)->%s", key, pos_int)
         self.write_fp.seek(pos_int)
         line_str = self.write_fp.readline()
         return json.loads(line_str).get("v")
@@ -211,6 +216,7 @@ class DataFile:
             # 没变化
             return
         with self.lock:
+            self.logger.debug("put(%s,%s)", key, pos_int)
             self.mem_store.put(key, pos_int)
             self.write(key, val)
 
@@ -233,6 +239,7 @@ class DataFile:
         return length / len(self.mem_store)
 
     def keys(self, key, limit=100):
+        assert limit <= 1000
         result = []
         for store_key, pos in self.mem_store:
             if fnmatch.fnmatch(store_key, key):

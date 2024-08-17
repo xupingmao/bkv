@@ -36,6 +36,12 @@ Description: 键值对存储, 基于Bitcask模型, copied from leveldbpy
 
 import bisect
 import threading
+import enum
+
+class MemStoreType(enum.Enum):
+    """内存存储类型"""
+    sqlite = "sqlite"
+    bisect = "bisect"
 
 
 class KvInterface(object):

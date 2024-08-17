@@ -4,16 +4,20 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2023-06-22 12:42:15
 LastEditors: xupingmao
-LastEditTime: 2023-06-22 16:36:28
+LastEditTime: 2024-08-14 02:06:08
 FilePath: /bkv/bkv/shell.py
 Description: 描述
 '''
 import bkv
 import traceback
+import logging
+import sys
 
 class Shell:
     
     def __init__(self, **kw):
+        logging.basicConfig(format='%(asctime)s|%(levelname)s|%(filename)s:%(lineno)d|%(message)s',
+            level=logging.INFO)
         self.db = bkv.DB(db_dir="./test-data", **kw)
 
     def loop(self):
@@ -29,8 +33,8 @@ class Shell:
                 break
             
             attr = "op_" + op
-            if hasattr(self, attr):
-                meth = getattr(self, attr)
+            meth = getattr(self, attr, None)
+            if meth != None:
                 try:
                     meth(parts)
                 except:
@@ -80,12 +84,30 @@ class Shell:
         print("OK")
 
     def op_keys(self, parts):
-        if len(parts) != 2:
+        if len(parts) not in (2,3):
             print("bad keys command")
         else:
             key = parts[1]
-            print(self.db.keys(key))
+            limit = 100
+            if len(parts) == 3:
+                limit = int(parts[2])
+            for index, item in enumerate(self.db.keys(key, limit=limit)):
+                print(f"{index} -> {item}")
             print("OK")
+
+    def op_loglevel(self, parts):
+        if len(parts) != 2:
+            print("bad loglevel command")
+        else:
+            level = parts[1]
+            if level.lower() == "debug":
+                logging.getLogger().setLevel(logging.DEBUG)
+                print("OK")
+            elif level.lower() == "info":
+                logging.getLogger().setLevel(logging.INFO)
+                print("OK")
+            else:
+                print(f"bad loglevel {level}")
 
     def print_help(self):
         print("bad command, supported commands:")
@@ -93,7 +115,7 @@ class Shell:
         print("- put $key $value     set value by key")
         print("- set $key $value     set value by key")
         print("- delete $key         delete key")
-        print("- keys $key           search key")
+        print("- keys $key [limit]   search key")
         print("- compact             compact data files")
         print("- memory_info         print memory info")
         print()
