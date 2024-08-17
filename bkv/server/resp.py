@@ -1,5 +1,16 @@
+# -*- coding:utf-8 -*-
+'''
+Author: xupingmao
+email: 578749341@qq.com
+Date: 2024-08-17 11:43:01
+LastEditors: xupingmao
+LastEditTime: 2024-08-18 00:43:46
+FilePath: /bkv/bkv/server/resp.py
+Description: 描述
+'''
 # encoding=utf-8
 # Modified from https://github.com/chekart/rediserver/
+import asyncio
 
 SYM_CRLF = b'\r\n'
 OK = object()
@@ -20,7 +31,7 @@ class Errors:
     NOT_IMPLEMENTED = Error('ERR', 'not implemented')
 
 
-async def read_command(reader):
+async def read_command(reader: asyncio.StreamReader):
     data = await reader.readuntil(SYM_CRLF)
 
     type_ = chr(data[0])

@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2024-08-17 11:43:01
 LastEditors: xupingmao
-LastEditTime: 2024-08-17 12:46:54
+LastEditTime: 2024-08-18 00:47:28
 FilePath: /bkv/bkv/server/server.py
 Description: 描述
 '''
@@ -23,7 +23,7 @@ from .queue import CommandQueue
 
 
 def create_redis_server(redis_impl: RedisInterface):
-    async def on_connect(reader, writer):
+    async def on_connect(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         transaction = CommandQueue(redis_impl)
 
         try:
@@ -74,7 +74,7 @@ def _create(redis_impl: RedisInterface, endpoint=None, unix_domain_socket=None):
     return redis_instance, loop, socket_server
 
 
-def _run_forever(loop, socket_server, started_event=None):
+def _run_forever(loop: asyncio.AbstractEventLoop, socket_server, started_event=None):
     server = loop.run_until_complete(socket_server)
 
     if started_event:
