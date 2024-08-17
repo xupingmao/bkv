@@ -9,6 +9,11 @@
 @Description: 配置相关
 """
 
+class FlushType:
+    never = "never"
+    always = "always"
+    everysec = "everysec"
+
 class Config:
     # 数据库目录
     db_dir = "./data"
@@ -23,6 +28,9 @@ class Config:
     
     # 是否打印加载信息
     print_load_stats = False
+
+    # 刷盘方式
+    flush_type = FlushType.always
     
     def load(self, kw={}):
         for key in kw:
@@ -32,3 +40,5 @@ class Config:
             else:
                 raise Exception("unknown config key: %s" % key)
         return self
+    
+default_config = Config()

@@ -4,8 +4,8 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2024-08-17 12:02:04
 LastEditors: xupingmao
-LastEditTime: 2024-08-17 16:43:07
-FilePath: /bkv/bkv/run_server.py
+LastEditTime: 2024-08-17 22:56:10
+FilePath: /bkv/bkv/redis/bkv_redis.py
 Description: 描述
 '''
 # encoding=utf-8
@@ -39,6 +39,10 @@ class BkvRedisImpl(RedisInterface):
         
     def execute_keys(self, key: bytes, *args):
         return self.db.keys(key.decode())
+    
+    def execute_compact(self, *args):
+        self.db.compact()
+        return resp.OK
 
 
 def run_server(config="./bkv.conf"):

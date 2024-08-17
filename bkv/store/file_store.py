@@ -18,7 +18,7 @@ import fnmatch
 import logging
 from bkv import utils
 from bkv.store.mem_store import MemoryKvStore, SqliteMemStore
-from bkv.store.config import Config
+from bkv.store.config import Config, FlushType, default_config
 
 class StoreItem:
     def __init__(self):
@@ -123,7 +123,7 @@ class DataFile:
 
     logger = logging.getLogger("DataFile")
 
-    def __init__(self, data_file="", config=Config()):
+    def __init__(self, data_file="", config=default_config):
         self.last_pos = 0
         self.db_dir = config.db_dir
         self.mem_store_type = config.mem_store_type
@@ -137,6 +137,7 @@ class DataFile:
         self.print_load_stats = config.print_load_stats
         self.load_data_file()
         self.lock = threading.RLock()
+        self.config = config
 
     def load_data_file(self):
         if not os.path.exists(self.db_dir):
@@ -193,7 +194,8 @@ class DataFile:
         self.write_fp.write(utils.dump_json(item.__dict__))
         self.write_fp.write("\n")
         # TODO 提供更多flush策略
-        self.write_fp.flush()
+        if self.config.flush_type == FlushType.always:
+            self.write_fp.flush()
         self.last_pos = self.write_fp.tell()
     
     def close(self):
