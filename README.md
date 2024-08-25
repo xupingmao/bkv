@@ -9,7 +9,7 @@
 -->
 # bkv
 
-A simple kv store.
+A simple kv store. Just for fun.
 
 # Feature
 
@@ -17,9 +17,9 @@ A simple kv store.
 - [x] put
 - [x] delete
 - [x] compact
-- [x] Redis Server, partly supported:
+- [x] Redis Server, partly supported
 
-## Supported Commands
+## Supported Redis Commands
 
 - PING
 - GET
