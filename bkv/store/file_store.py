@@ -200,6 +200,10 @@ class DataFile:
     
     def close(self):
         self.write_fp.close()
+
+    def exists(self, key):
+        pos_int = self.mem_store.get(key)
+        return pos_int != None
     
     def get(self, key):
         pos_int = self.mem_store.get(key)

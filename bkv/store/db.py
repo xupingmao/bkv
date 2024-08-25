@@ -48,6 +48,9 @@ class DB:
         with self.lock:
             return self.meta.delete_old_data_files()
     
+    def exists(self, key):
+        return self.store.exists(key)
+    
     def get(self, key):
         return self.store.get(key)
     

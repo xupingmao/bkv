@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2024-08-17 11:43:01
 LastEditors: xupingmao
-LastEditTime: 2024-08-18 00:47:28
+LastEditTime: 2024-08-25 18:25:06
 FilePath: /bkv/bkv/server/server.py
 Description: 描述
 '''
@@ -62,14 +62,14 @@ def _create(redis_impl: RedisInterface, endpoint=None, unix_domain_socket=None):
     assert isinstance(redis_impl, RedisInterface)
     assert (unix_domain_socket is None) != (endpoint is None)
 
-    loop = asyncio.new_event_loop()
     redis_instance, on_connect = create_redis_server(redis_impl)
+    loop = asyncio.get_event_loop()
 
     if unix_domain_socket:
-        socket_server = asyncio.start_unix_server(on_connect, path=unix_domain_socket, loop=loop)
+        socket_server = asyncio.start_unix_server(on_connect, path=unix_domain_socket)
     else:
         host, port = endpoint
-        socket_server = asyncio.start_server(on_connect, host=host, port=port, loop=loop)
+        socket_server = asyncio.start_server(on_connect, host=host, port=port)
 
     return redis_instance, loop, socket_server
 

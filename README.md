@@ -17,7 +17,16 @@ A simple kv store.
 - [x] put
 - [x] delete
 - [x] compact
-- [x] Redis Server (support commands: GET/SET/DEL/KEYS)
+- [x] Redis Server, partly supported:
+
+## Supported Commands
+
+- PING
+- GET
+- SET
+- DEL
+- KEYS
+- SETNX
 
 # TODO
 

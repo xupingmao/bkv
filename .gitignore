@@ -4,3 +4,4 @@ bkv.egg-info/*
 build/*
 dist/*
 .venv/
+run-server.spec

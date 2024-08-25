@@ -4,7 +4,7 @@ Author: xupingmao
 email: 578749341@qq.com
 Date: 2024-08-17 12:02:04
 LastEditors: xupingmao
-LastEditTime: 2024-08-17 22:56:10
+LastEditTime: 2024-08-25 18:04:07
 FilePath: /bkv/bkv/redis/bkv_redis.py
 Description: 描述
 '''
@@ -29,6 +29,14 @@ class BkvRedisImpl(RedisInterface):
         self.db.put(key.decode(), value.decode())
         return resp.OK
     
+    def execute_setnx(self, key: bytes, value: bytes):
+        with self.db.lock:
+            if self.db.exists(key.decode()):
+                return 0
+            else:
+                self.db.put(key.decode(), value.decode())
+                return 1
+    
     def execute_get(self, key: bytes):
         return self.db.get(key.decode())
     
@@ -43,6 +51,11 @@ class BkvRedisImpl(RedisInterface):
     def execute_compact(self, *args):
         self.db.compact()
         return resp.OK
+    
+    def execute_ping(self, message=""):
+        if message == "":
+            return "PONG"
+        return message
 
 
 def run_server(config="./bkv.conf"):
