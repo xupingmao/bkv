@@ -1,6 +1,7 @@
 # encoding=utf-8
 import logging
 import typing
+from typing import Optional
 from . import resp
 
 class KeyType:
@@ -39,7 +40,7 @@ class RedisInterface:
     def execute_set(self, key: bytes, value):
         return resp.OK
 
-    def execute_get(self, key: bytes):
+    def execute_get(self, key: bytes) -> Optional[bytes]:
         return b''
 
     def execute_incrby(self, key: bytes, value):
@@ -48,7 +49,7 @@ class RedisInterface:
     def execute_decrby(self, key: bytes, value):
         return 0
 
-    def execute_del(self, *keys: bytes):
+    def execute_del(self, *keys: bytes) -> object:
         return resp.Errors.NOT_IMPLEMENTED
 
     def execute_scan(self, cursor):

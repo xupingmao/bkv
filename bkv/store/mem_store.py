@@ -37,6 +37,7 @@ Description: 键值对存储, 基于Bitcask模型, modified from leveldbpy
 import bisect
 import threading
 import enum
+from typing import Dict, Optional
 
 class MemStoreType(enum.Enum):
     """内存存储类型"""
@@ -46,14 +47,20 @@ class MemStoreType(enum.Enum):
 
 class KvInterface(object):
 
-    def get(self, key):
+    def get(self, key: str) -> Optional[int]:
         return None
     
-    def put(self, key, val):
+    def put(self, key: str, val: int) -> None:
         pass
 
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         pass
+    
+    def __len__(self) -> int:
+        return 0
+    
+    def __iter__(self):
+        return iter([])
 
 class MemoryKvStore(KvInterface):
 
@@ -69,7 +76,7 @@ class MemoryKvStore(KvInterface):
         with self._lock:
             self._data = []
 
-    def put(self, key, val):
+    def put(self, key: str, val: int):
         assert isinstance(key, str)
         with self._lock:
             idx = bisect.bisect_left(self._data, (key, self.default_value))
@@ -120,11 +127,12 @@ class MemoryKvStore(KvInterface):
 class _IteratorMemImpl(object):
 
     __slots__ = ["_data", "_idx"]
+    
+    default_value = ""
 
     def __init__(self, memdb_data):
         self._data = memdb_data
         self._idx = -1
-        self.default_value = ""
 
     def valid(self):
         return 0 <= self._idx < len(self._data)
@@ -220,3 +228,21 @@ class SqliteMemStore(KvInterface):
             cursor.close()
 
 
+class HashMemStore(KvInterface):
+    def __init__(self) -> None:
+        self._data: Dict[str, int] = {}
+        
+    def get(self, key: str) -> Optional[int]:
+        return self._data.get(key)
+    
+    def put(self, key: str, val: int):
+        self._data[key] = val
+    
+    def delete(self, key: str):
+        self._data.pop(key, None)
+        
+    def __len__(self) -> int:
+        return len(self._data)
+    
+    def __iter__(self):
+        return iter(self._data.items())

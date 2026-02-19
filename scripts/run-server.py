@@ -25,7 +25,7 @@ from bkv.store.config import default_config, FlushType
 
 def run_server(config="./bkv.conf"):
     logging.basicConfig(format='%(asctime)s|%(levelname)s|%(filename)s:%(lineno)d|%(message)s',
-            level=logging.INFO)
+            level=logging.DEBUG)
     default_config.flush_type = FlushType.always
     redis_impl = BkvRedisImpl(db_dir="./test-data")
     run_tcp(redis_impl=redis_impl)

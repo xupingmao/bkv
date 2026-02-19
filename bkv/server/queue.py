@@ -3,6 +3,7 @@
 
 from .interfaces import RedisInterface
 from . import resp
+from typing import Set
 
 
 class CommandQueue:
@@ -13,7 +14,7 @@ class CommandQueue:
     def __init__(self, redis_server: RedisInterface):
         self.redis = redis_server
         self.transaction = None
-        self.watch = set()
+        self.watch: Set[bytes] = set()
         self.rollback = False
 
     def reset(self):
@@ -22,7 +23,7 @@ class CommandQueue:
         self.watch.clear()
         self.redis.remove_watch(self)
 
-    def on_change(self, key):
+    def on_change(self, key: bytes):
         if key in self.watch:
             self.rollback = True
 

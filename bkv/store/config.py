@@ -14,6 +14,11 @@ class FlushType:
     always = "always"
     everysec = "everysec"
 
+class StoreType:
+    bisect = "bisect"
+    sqlite = "sqlite"
+    hash = "hash"
+
 class Config:
     # 数据库目录
     db_dir = "./data"
@@ -23,8 +28,8 @@ class Config:
     # 文件名称
     default_data_file = "./data-1.txt"
     
-    # 内存存储类型, 包括 {bisect, sqlite}
-    mem_store_type = "bisect"
+    # 内存存储类型, 包括 {bisect, sqlite, hash}
+    mem_store_type = StoreType.hash
     
     # 是否打印加载信息
     print_load_stats = False

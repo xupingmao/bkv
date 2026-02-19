@@ -10,10 +10,12 @@ Description: 描述
 '''
 # encoding=utf-8
 import os
+import bkv.store
 import fire
 import logging
-import bkv.store
 
+from typing import Optional
+from bkv import utils
 from bkv.server.interfaces import RedisInterface
 from bkv.server import run_tcp
 from bkv.server import resp
@@ -25,7 +27,7 @@ class BkvRedisImpl(RedisInterface):
             raise Exception(f"db_dir {db_dir} is invalid dirname")
         self.db = bkv.store.DB(db_dir=db_dir, **kw)
 
-    def execute_set(self, key: bytes, value):
+    def execute_set(self, key: bytes, value: bytes):
         self.db.put(key.decode(), value.decode())
         return resp.OK
     
@@ -37,8 +39,11 @@ class BkvRedisImpl(RedisInterface):
                 self.db.put(key.decode(), value.decode())
                 return 1
     
-    def execute_get(self, key: bytes):
-        return self.db.get(key.decode())
+    def execute_get(self, key: bytes) -> Optional[bytes]:
+        result = self.db.get(key.decode())
+        if result is None:
+            return None
+        return utils.dump_json_to_bytes(result)
     
     def execute_del(self, *keys: bytes):
         for key in keys:
@@ -58,10 +63,10 @@ class BkvRedisImpl(RedisInterface):
         return message
 
 
-def run_server(config="./bkv.conf"):
+def run_server(db_dir: str):
     logging.basicConfig(format='%(asctime)s|%(levelname)s|%(filename)s:%(lineno)d|%(message)s',
             level=logging.DEBUG)
-    redis_impl = BkvRedisImpl()
+    redis_impl = BkvRedisImpl(db_dir=db_dir)
     run_tcp(redis_impl=redis_impl)
 
 if __name__ == '__main__':

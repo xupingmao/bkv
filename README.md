@@ -31,3 +31,8 @@ A simple kv store. Just for fun.
 # TODO
 
 - [] 
+
+
+# References
+
+- https://github.com/chekart/rediserver/

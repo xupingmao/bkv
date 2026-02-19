@@ -16,14 +16,16 @@ import time
 import threading
 import fnmatch
 import logging
+
+from typing import List
 from bkv import utils
-from bkv.store.mem_store import MemoryKvStore, SqliteMemStore
-from bkv.store.config import Config, FlushType, default_config
+from bkv.store.mem_store import HashMemStore, KvInterface, MemoryKvStore, SqliteMemStore
+from bkv.store.config import Config, FlushType, default_config, StoreType
 
 class StoreItem:
     def __init__(self):
         self.k = ""
-        self.v = ""
+        self.v = None
         self.d = 0 # 删除标记
 
 class StoreMeta:
@@ -122,16 +124,21 @@ class DataFile:
     """db存储，管理1个存储文件"""
 
     logger = logging.getLogger("DataFile")
+    mem_store: KvInterface
 
     def __init__(self, data_file="", config=default_config):
         self.last_pos = 0
         self.db_dir = config.db_dir
         self.mem_store_type = config.mem_store_type
+        
+        self.logger.debug("mem_store_type=%s", self.mem_store_type)
 
-        if self.mem_store_type == "sqlite":
+        if self.mem_store_type == StoreType.sqlite:
             self.mem_store = SqliteMemStore()
+        if self.mem_store_type == StoreType.hash:
+            self.mem_store = HashMemStore()
         else:
-            self.mem_store = MemoryKvStore(default_value=0)
+            self.mem_store = MemoryKvStore(default_value="")
 
         self.data_file = data_file
         self.print_load_stats = config.print_load_stats
@@ -175,6 +182,7 @@ class DataFile:
                     qps = qps_counter.qps()
                     print(f"keys:({keys}), memory:({rss:.2f}MB), qps:({qps//1})")
         
+        self.logger.info("load data file %s done, total count: %d", self.data_file, count)
         self.write_fp = open(fpath, "a+")
         self.last_pos = self.write_fp.tell()
     
@@ -184,7 +192,7 @@ class DataFile:
         item.__dict__.update(json_dict)
         return item
 
-    def write(self, key="", val="", delete=0):
+    def write(self, key="", val=None, delete=0):
         # TODO 优化下编码器，增加校验和删除标记
         self.write_fp.seek(self.last_pos)
         item = StoreItem()
@@ -201,11 +209,11 @@ class DataFile:
     def close(self):
         self.write_fp.close()
 
-    def exists(self, key):
+    def exists(self, key: str):
         pos_int = self.mem_store.get(key)
         return pos_int != None
     
-    def get(self, key):
+    def get(self, key: str):
         pos_int = self.mem_store.get(key)
         if pos_int == None:
             return None
@@ -214,7 +222,7 @@ class DataFile:
         line_str = self.write_fp.readline()
         return json.loads(line_str).get("v")
     
-    def put(self, key, val):
+    def put(self, key: str, val: object):
         # TODO 把data文件切割成多个文件，写满一个文件后自动切换到新的文件
         pos_int = self.write_fp.tell()
         exist = self.get(key)
@@ -226,7 +234,7 @@ class DataFile:
             self.mem_store.put(key, pos_int)
             self.write(key, val)
 
-    def delete(self, key):
+    def delete(self, key: str):
         exist = self.get(key)
         if exist == None:
             # 已经删除
@@ -244,7 +252,7 @@ class DataFile:
             length += len(key)
         return length / len(self.mem_store)
 
-    def keys(self, key, limit=100):
+    def keys(self, key: str, limit=100) -> List[str]:
         assert limit <= 1000
         result = []
         for store_key, pos in self.mem_store:

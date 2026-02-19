@@ -44,3 +44,6 @@ class QpsCounter:
 
 def dump_json(obj):
     return json.dumps(obj, separators=(',',':'))
+
+def dump_json_to_bytes(obj):
+    return dump_json(obj).encode()

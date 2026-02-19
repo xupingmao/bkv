@@ -16,6 +16,7 @@ import asyncio.streams
 import asyncio.exceptions
 
 from threading import Thread, Event
+from typing import Optional
 
 from .interfaces import RedisInterface
 from . import resp
@@ -51,27 +52,29 @@ def create_redis_server(redis_impl: RedisInterface):
 
 
 def run_tcp(redis_impl: RedisInterface, host='127.0.0.1', port=6379):
-    run(redis_impl=redis_impl, endpoint=(host, port))
+    loop, socket_server = _create_with_host_and_port(redis_impl=redis_impl, host=host, port=port)
+    _run_forever(loop, socket_server)
 
 
-def run_sock(redis_impl: RedisInterface, path):
-    run(redis_impl=redis_impl, unix_domain_socket=path)
+def run_socket(redis_impl: RedisInterface, path: str):
+    loop, socket_server = _create_socket(redis_impl=redis_impl, unix_domain_socket=path)
+    _run_forever(loop, socket_server)
 
 
-def _create(redis_impl: RedisInterface, endpoint=None, unix_domain_socket=None):
+def _create_with_host_and_port(redis_impl: RedisInterface, host='', port=6379):
+    redis_instance, on_connect = create_redis_server(redis_impl)
+    loop = asyncio.get_event_loop()
+    socket_server = asyncio.start_server(on_connect, host=host, port=port)
+    return loop, socket_server
+
+def _create_socket(redis_impl: RedisInterface, unix_domain_socket=None):
     assert isinstance(redis_impl, RedisInterface)
-    assert (unix_domain_socket is None) != (endpoint is None)
+    assert unix_domain_socket is not None
 
     redis_instance, on_connect = create_redis_server(redis_impl)
     loop = asyncio.get_event_loop()
-
-    if unix_domain_socket:
-        socket_server = asyncio.start_unix_server(on_connect, path=unix_domain_socket)
-    else:
-        host, port = endpoint
-        socket_server = asyncio.start_server(on_connect, host=host, port=port)
-
-    return redis_instance, loop, socket_server
+    socket_server = asyncio.start_unix_server(on_connect, path=unix_domain_socket) 
+    return loop, socket_server
 
 
 def _run_forever(loop: asyncio.AbstractEventLoop, socket_server, started_event=None):
@@ -89,12 +92,6 @@ def _run_forever(loop: asyncio.AbstractEventLoop, socket_server, started_event=N
     loop.run_until_complete(server.wait_closed())
     loop.close()
 
-
-def run(redis_impl: RedisInterface, endpoint=None, unix_domain_socket=None):
-    redis_instance, loop, socket_server = _create(redis_impl=redis_impl, endpoint=endpoint, unix_domain_socket=unix_domain_socket)
-    _run_forever(loop, socket_server)
-
-
 def run_threaded(unix_domain_socket):
     started_event = Event()
 
@@ -106,7 +103,7 @@ def run_threaded(unix_domain_socket):
     data = Data()
 
     def thread_target():
-        data.redis_instance, data.loop, socket_server = _create(unix_domain_socket=unix_domain_socket)
+        data.redis_instance, data.loop, socket_server = _create_socket(unix_domain_socket=unix_domain_socket)
         _run_forever(data.loop, socket_server, started_event)
 
     thread = Thread(target=thread_target)

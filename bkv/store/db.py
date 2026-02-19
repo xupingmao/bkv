@@ -48,16 +48,16 @@ class DB:
         with self.lock:
             return self.meta.delete_old_data_files()
     
-    def exists(self, key):
+    def exists(self, key: str):
         return self.store.exists(key)
     
-    def get(self, key):
+    def get(self, key: str):
         return self.store.get(key)
     
-    def put(self, key, value):
+    def put(self, key: str, value: object):
         return self.store.put(key, value)
     
-    def delete(self, key):
+    def delete(self, key: str):
         return self.store.delete(key)
     
     def count(self):
