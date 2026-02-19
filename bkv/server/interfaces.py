@@ -31,6 +31,8 @@ class RedisInterface:
     def execute_single(self, command: bytes, *args):
         command_str = command.decode("utf-8")
         command_lower = command_str.lower()
+        if "." in command_lower:
+            command_lower = command_lower.replace(".", "_")
         meth = getattr(self, "execute_" + command_lower, None)
         if meth is None:
             return resp.Error('ERR', f'command {command_str} not implemented')

@@ -17,14 +17,24 @@ def run_client():
         if cmd == "":
             continue
         if cmd.lower() in ("exit", "quit"):
+            print("Bye!")
             return
         try:
             result = r.execute_command(cmd)
             if isinstance(result, bytes):
                 result = result.decode("utf-8")
+            elif isinstance(result, list):
+                print_list_resp(result)
+                continue
             print(result)
         except Exception as e:
             print(f"Error: {e}")
-            
+
+def print_list_resp(result:list):
+    for i, item in enumerate(result):
+        if isinstance(item, bytes):
+            item = item.decode("utf-8")
+        print(f"{i+1}) {item}")
+
 if __name__ == '__main__':
     run_client()

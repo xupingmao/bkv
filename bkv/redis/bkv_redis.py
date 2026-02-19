@@ -62,6 +62,12 @@ class BkvRedisImpl(RedisInterface):
             return "PONG"
         return message
 
+    def execute_debug_info(self):
+        return utils.dump_json({
+            "memory_info": utils.memory_info()._asdict(),
+            "count": self.db.count(),
+            "avg_key_len": self.db.avg_key_len(),
+        })
 
 def run_server(db_dir: str):
     logging.basicConfig(format='%(asctime)s|%(levelname)s|%(filename)s:%(lineno)d|%(message)s',

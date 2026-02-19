@@ -68,6 +68,7 @@ class FakeLuaRuntime:
         raise NotImplementedError("LuaRuntime.eval")
 
 class Redis(RedisInterface):
+    """Not Used Yet"""
     def __init__(self):
         self.keys = {}
         self.scripts = {}
